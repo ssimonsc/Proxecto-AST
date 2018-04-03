@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This file was auto-generated from WSDL -->
+<!-- by the Apache Axis2 version: 1.7.7  Built on : Nov 20, 2017 (11:41:20 GMT) -->
+<serviceGroup>
+    <service name="Orquestrador">
+        <messageReceivers>
+            <messageReceiver mep="http://www.w3.org/ns/wsdl/in-out" class="org.apache.ws.axis2.OrquestradorMessageReceiverInOut"/>
+        </messageReceivers>
+        <parameter name="ServiceClass">org.apache.ws.axis2.OrquestradorSkeleton</parameter>
+        <parameter name="useOriginalwsdl">true</parameter>
+        <parameter name="modifyUserWSDLPortAddress">true</parameter>
+        <operation name="DistanciaAMonequiland" mep="http://www.w3.org/ns/wsdl/in-out" namespace="http://ws.apache.org/axis2">
+            <actionMapping>urn:DistanciaAMonequiland</actionMapping>
+            <outputActionMapping>urn:DistanciaAMonequilandResponse</outputActionMapping>
+        </operation>
+        <operation name="ViaxeAMonequiland" mep="http://www.w3.org/ns/wsdl/in-out" namespace="http://ws.apache.org/axis2">
+            <actionMapping>urn:ViaxeAMonequiland</actionMapping>
+            <outputActionMapping>urn:ViaxeAMonequilandResponse</outputActionMapping>
+        </operation>
+    </service>
+</serviceGroup>
