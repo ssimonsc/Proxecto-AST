@@ -46,12 +46,11 @@ public class OrquestradorSkeleton {
         
         String respostaCache = TesAmiñaConsulta(corpoCeleste, unidades); //Creamos unha conexion coa cache e preguntamoslle se ten gardada esta consulta
         
-        if(respostaCache != null && !respostaCache.equalsIgnoreCase("erro na consulta")) //Se a ten gardad, finalizamos e pasamoslle a resposta ao cliente
+        if(respostaCache != null) //Se a ten gardad, finalizamos e pasamoslle a resposta ao cliente
         {
             estaEaDistancia.set_return(respostaCache);
             return estaEaDistancia;
         }
- 
         
        String DistanciaAtaOcorpoCeleste = IstoOndeQueda(corpoCeleste); //Creamos unha conexion co noso servizo propio DistanciaPlaneta e obtemos a distancia
        
@@ -85,7 +84,7 @@ public class OrquestradorSkeleton {
         
         String respostaCache = TesAmiñaConsulta(corpoCeleste, vehiculo);//Creamos unha conexion coa cache e preguntamoslle se ten gardada esta consulta
         
-        if(respostaCache != null)//Se a ten gardad, finalizamos e pasamoslle a resposta ao cliente
+        if(respostaCache != null)//Se a ten gardada, finalizamos e pasamoslle a resposta ao cliente
         {
             BoaViaxe.set_return(respostaCache);
             return BoaViaxe;
@@ -110,11 +109,13 @@ public class OrquestradorSkeleton {
         
         try
         {
-            String miñaConsulta = corpoCeleste + ":" + unidades;
+            String miñaConsulta1 = corpoCeleste;
+            String miñaConsulta2 = unidades;
             
             /**********ELEMENTO NESCESARIOS PARA ESTBLCER A CONEXION***********/
-            OMElement resposta = null;
-            OMElement contido = null;;
+            OMElement consulta = null;
+            OMElement contido1 = null;
+            OMElement contido2 = null;
             OMFactory factory = OMAbstractFactory.getOMFactory();
             OMNamespace nameSpace = factory.createOMNamespace("http://Cache", "ns");//Non estou seguro de que sexa asi
             ServiceClient serviceClient = new ServiceClient();
@@ -133,14 +134,17 @@ public class OrquestradorSkeleton {
             /*****************************************************************************/
         
             /***********USAMOS A FUNCION BUSCAR NA CACHE DO SERVIZO CACHE******************/
-            resposta = factory.createOMElement("cache", nameSpace);
-            contido = factory.createOMElement("args0", nameSpace);
-            contido.setText(miñaConsulta);
-            resposta.addChild(contido);
+            consulta = factory.createOMElement("cache", nameSpace);
+            contido1 = factory.createOMElement("args0", nameSpace);
+            contido1.setText(miñaConsulta1);
+            consulta.addChild(contido1);
+            contido2 = factory.createOMElement("args1", nameSpace);
+            contido2.setText(miñaConsulta2);
+            consulta.addChild(contido2);
             /******************************************************************************/
         
             /**Obtemos a resposta da cache***/
-            String respostaCache = serviceClient.sendReceive(resposta).getText().toString();
+            String respostaCache = serviceClient.sendReceive(consulta).getText().toString();
             return respostaCache;
         }
         catch(Exception e) {
@@ -155,19 +159,94 @@ public class OrquestradorSkeleton {
         /*
          * Establecer conexion co servizo Distancia Planeta*/
         
-        String respostaDistancia = "algo";
+        try
+        {
+            String miñaConsulta = corpoCeleste;
+            
+            /**********ELEMENTO NESCESARIOS PARA ESTBLCER A CONEXION***********/
+            OMElement consulta = null;
+            OMElement contido = null;;
+            OMFactory factory = OMAbstractFactory.getOMFactory();
+            OMNamespace nameSpace = factory.createOMNamespace("http://DistanciaCorpo", "ns");//Non estou seguro de que sexa asi
+            ServiceClient serviceClient = new ServiceClient();
+            
+            /********************CREAMOS FIOS PARA CADA PETICION***************************/
+            MultiThreadedHttpConnectionManager conmgr = new MultiThreadedHttpConnectionManager();
+            conmgr.getParams().setDefaultMaxConnectionsPerHost(10);
+            HttpClient client = new HttpClient(conmgr);
+            /******************************************************************************/
+            
+            /***********ESTABLECEMOS AS OPCIONS DA NOSA CONEXION*************************/
+            Options opcions = new Options();
+            opcions.setProperty(HTTPConstants.CACHED_HTTP_CLIENT, client);
+            opcions.setTo(new EndpointReference("http://localhost:8080/axis2/services/DistanciaCorpo"));
+            serviceClient.setOptions(opcions);
+            /*****************************************************************************/
         
-        return respostaDistancia;
+            /***********USAMOS A FUNCION BUSCAR NA CACHE DO SERVIZO CACHE******************/
+            consulta = factory.createOMElement("distanciaCorpo", nameSpace);
+            contido = factory.createOMElement("args0", nameSpace);
+            contido.setText(miñaConsulta);
+            consulta.addChild(contido);
+            /******************************************************************************/
+        
+            /**Obtemos a resposta da cache***/
+            String respostaDistancia = serviceClient.sendReceive(consulta).getText().toString();
+            return respostaDistancia;
+        }
+        catch(Exception e) {
+            return "erro na consulta";
+        }
+        
     }
     
     public String PeroCantoTardoOh(String DistanciaAtaOcorpoCeleste, String vehiculo)
     {
         /*
          * Establcer conexion co servizo Tempo Viaxe*/
+        try
+        {
+            String miñaConsulta1 = DistanciaAtaOcorpoCeleste;
+            String miñaConsulta2 = vehiculo;
+            
+            /**********ELEMENTO NESCESARIOS PARA ESTBLCER A CONEXION***********/
+            OMElement consulta = null;
+            OMElement contido1 = null;
+            OMElement contido2 = null;
+            OMFactory factory = OMAbstractFactory.getOMFactory();
+            OMNamespace nameSpace = factory.createOMNamespace("http://Tempo", "ns");//Non estou seguro de que sexa asi
+            ServiceClient serviceClient = new ServiceClient();
+            
+            /********************CREAMOS FIOS PARA CADA PETICION***************************/
+            MultiThreadedHttpConnectionManager conmgr = new MultiThreadedHttpConnectionManager();
+            conmgr.getParams().setDefaultMaxConnectionsPerHost(10);
+            HttpClient client = new HttpClient(conmgr);
+            /******************************************************************************/
+            
+            /***********ESTABLECEMOS AS OPCIONS DA NOSA CONEXION*************************/
+            Options opcions = new Options();
+            opcions.setProperty(HTTPConstants.CACHED_HTTP_CLIENT, client);
+            opcions.setTo(new EndpointReference("http://localhost:8080/axis2/services/Tempo"));
+            serviceClient.setOptions(opcions);
+            /*****************************************************************************/
         
-        String respostaTempo = "algo";
+            /***********USAMOS A FUNCION BUSCAR NA CACHE DO SERVIZO CACHE******************/
+            consulta = factory.createOMElement("tempo", nameSpace);
+            contido1 = factory.createOMElement("args0", nameSpace);
+            contido1.setText(miñaConsulta1);
+            contido2 = factory.createOMElement("args1", nameSpace);
+            contido2.setText(miñaConsulta2);
+            consulta.addChild(contido1);
+            consulta.addChild(contido2);
+            /******************************************************************************/
         
-        return respostaTempo;
+            /**Obtemos a resposta da cache***/
+            String respostaTempo= serviceClient.sendReceive(consulta).getText().toString();
+            return respostaTempo;
+        }
+        catch(Exception e) {
+            return "erro na consulta";
+        }
     }
     
     public String PasameIsto(String DistanciaAtaOcorpoCeleste, String unidades)
@@ -175,9 +254,49 @@ public class OrquestradorSkeleton {
         /*
          * Establecer conexion co servizo externo conversor*/
         
-        String respostaConversor = "algo";
+        try
+        {
+            String miñaConsulta1 = DistanciaAtaOcorpoCeleste;
+            String miñaConsulta2 = unidades;
+            
+            /**********ELEMENTO NESCESARIOS PARA ESTBLCER A CONEXION***********/
+            OMElement consulta = null;
+            OMElement contido1 = null;
+            OMElement contido2 = null;
+            OMFactory factory = OMAbstractFactory.getOMFactory();
+            OMNamespace nameSpace = factory.createOMNamespace("http://www.webservicex.net/", "ns");//Non estou seguro de que sexa asi
+            ServiceClient serviceClient = new ServiceClient();
+            
+            /********************CREAMOS FIOS PARA CADA PETICION***************************/
+            MultiThreadedHttpConnectionManager conmgr = new MultiThreadedHttpConnectionManager();
+            conmgr.getParams().setDefaultMaxConnectionsPerHost(10);
+            HttpClient client = new HttpClient(conmgr);
+            /******************************************************************************/
+            
+            /***********ESTABLECEMOS AS OPCIONS DA NOSA CONEXION*************************/
+            Options opcions = new Options();
+            opcions.setProperty(HTTPConstants.CACHED_HTTP_CLIENT, client);
+            opcions.setTo(new EndpointReference("http://www.webservicex.net/Astronomical.asmx"));
+            serviceClient.setOptions(opcions);
+            /*****************************************************************************/
         
-        return respostaConversor;
+            /***********USAMOS A FUNCION BUSCAR NA CACHE DO SERVIZO CACHE******************/
+            consulta = factory.createOMElement("distanciaCorpo", nameSpace);
+            contido1 = factory.createOMElement("args0", nameSpace);
+            contido1.setText(miñaConsulta1);
+            consulta.addChild(contido1);
+            contido2 = factory.createOMElement("args1", nameSpace);
+            contido2.setText(miñaConsulta2);
+            consulta.addChild(contido2);
+            /******************************************************************************/
+        
+            /**Obtemos a resposta da cache***/
+            String respostaConversor = serviceClient.sendReceive(consulta).getText().toString();
+            return respostaConversor;
+        }
+        catch(Exception e) {
+            return "erro na consulta";
+        }
     }
     
     public void GardameIsto(String corpoCeleste, String unidades, String DistanciaAtaOcorpoCeleste)
