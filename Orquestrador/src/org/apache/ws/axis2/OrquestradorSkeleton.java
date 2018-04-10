@@ -1,13 +1,19 @@
+package org.apache.ws.axis2;
 /**
  * OrquestradorSkeleton.java
  *
  * This file was auto-generated from WSDL
  * by the Apache Axis2 version: 1.7.7  Built on : Nov 20, 2017 (11:41:20 GMT)
  */
-package org.apache.ws.axis2;
 
 
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.rmi.RemoteException;
 import java.util.Iterator;
+
+import javax.xml.ws.Endpoint;
 
 import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
@@ -17,22 +23,62 @@ import org.apache.axis2.addressing.EndpointReference;
 import org.apache.axis2.client.Options;
 import org.apache.axis2.client.ServiceClient;
 import org.apache.axis2.client.async.AxisCallback;
+import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.MessageContext;
+import org.apache.axis2.description.AxisService;
+import org.apache.axis2.engine.ServiceLifeCycle;
 import org.apache.axis2.transport.http.HTTPConstants;
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.juddi.api_v3.AccessPointType;
+import org.apache.juddi.api_v3.Publisher;
+import org.apache.juddi.api_v3.SavePublisher;
+import org.apache.juddi.v3.client.config.UDDIClerk;
+import org.apache.juddi.v3.client.config.UDDIClient;
+import org.apache.juddi.v3.client.transport.Transport;
+import org.apache.juddi.v3.client.transport.TransportException;
+import org.apache.juddi.v3_service.JUDDIApiPortType;
+import org.uddi.api_v3.AccessPoint;
+import org.uddi.api_v3.AuthToken;
+import org.uddi.api_v3.BindingTemplate;
+import org.uddi.api_v3.BindingTemplates;
+import org.uddi.api_v3.BusinessDetail;
+import org.uddi.api_v3.BusinessEntity;
+import org.uddi.api_v3.BusinessService;
+import org.uddi.api_v3.CategoryBag;
+import org.uddi.api_v3.Description;
+import org.uddi.api_v3.GetAuthToken;
+import org.uddi.api_v3.KeyedReference;
+import org.uddi.api_v3.Name;
+import org.uddi.api_v3.OverviewDoc;
+import org.uddi.api_v3.OverviewURL;
+import org.uddi.api_v3.SaveBusiness;
+import org.uddi.api_v3.SaveService;
+import org.uddi.api_v3.ServiceDetail;
+import org.uddi.api_v3.TModel;
+import org.uddi.v3_service.DispositionReportFaultMessage;
+import org.uddi.v3_service.UDDIPublicationPortType;
+import org.uddi.v3_service.UDDISecurityPortType;
 
-public class OrquestradorSkeleton {
+public class OrquestradorSkeleton implements ServiceLifeCycle{
     
     public static OMElement respostaAsincrona = null;
+	private static String serviceKey;
+	private Buscar buscar = null;
     /**
      * Auto generated method signature
      *
      * @param distanciaAMonequiland
      * @return distanciaAMonequilandResponse
+     * @throws TransportException 
+     * @throws ConfigurationException 
      */
     public org.apache.ws.axis2.DistanciaAMonequilandResponse distanciaAMonequiland(
-        org.apache.ws.axis2.DistanciaAMonequiland distanciaAMonequiland) {
+        org.apache.ws.axis2.DistanciaAMonequiland distanciaAMonequiland) throws ConfigurationException, TransportException {
+    	
+    	buscar = new Buscar();
+    	
         /**********ARGUMENTOS QUE NOS PASA O USUARIO***********/
         String corpoCeleste = distanciaAMonequiland.getArgs0();
         String unidades = distanciaAMonequiland.getArgs1();
@@ -68,9 +114,14 @@ public class OrquestradorSkeleton {
      *
      * @param viaxeAMonequiland
      * @return viaxeAMonequilandResponse
+     * @throws TransportException 
+     * @throws ConfigurationException 
      */
     public org.apache.ws.axis2.ViaxeAMonequilandResponse viaxeAMonequiland(
-        org.apache.ws.axis2.ViaxeAMonequiland viaxeAMonequiland) {
+        org.apache.ws.axis2.ViaxeAMonequiland viaxeAMonequiland) throws ConfigurationException, TransportException {
+    	
+    	buscar = new Buscar();
+    	
         /**********ARGUMENTOS QUE NOS PASA O USUARIO***********/
         String corpoCeleste = viaxeAMonequiland.getArgs0();
         String vehiculo = viaxeAMonequiland.getArgs1();
@@ -179,7 +230,7 @@ public class OrquestradorSkeleton {
             /***********ESTABLECEMOS AS OPCIONS DA NOSA CONEXION*************************/
             Options opcions = new Options();
             opcions.setProperty(HTTPConstants.CACHED_HTTP_CLIENT, client);
-            opcions.setTo(new EndpointReference("http://localhost:8080/axis2/services/DistanciaCorpo"));
+            opcions.setTo(new EndpointReference(buscar.obterDireccionWSDL("DistanciaCorpo")));
             serviceClient.setOptions(opcions);
             /*****************************************************************************/
         
@@ -216,6 +267,7 @@ public class OrquestradorSkeleton {
             OMFactory factory = OMAbstractFactory.getOMFactory();
             OMNamespace nameSpace = factory.createOMNamespace("http://Tempo", "ns");//Non estou seguro de que sexa asi
             ServiceClient serviceClient = new ServiceClient();
+            /**********************************************************************/
             
             /********************CREAMOS FIOS PARA CADA PETICION***************************/
             MultiThreadedHttpConnectionManager conmgr = new MultiThreadedHttpConnectionManager();
@@ -304,8 +356,88 @@ public class OrquestradorSkeleton {
         /*
          * Establecer conexion coa cache*/      
     }
-    
-    
+
+    /*Neste metodo desrexitramos o servizo de UDDI*/
+	@Override
+	public void shutDown(ConfigurationContext arg0, AxisService arg1) {
+		try {
+			//Creamos o noso cliente JUDDI a traves da informacion gardada no arquivo uddi.xml
+			//O cal garda a auntenticacions (usuario e contrasinal) do servizo
+			UDDIClient uddiClient = new UDDIClient("META-INF/uddi.xml");	
+			UDDIClerk clerk = uddiClient.getClerk("joe");
+			
+			//Desrexistramos o servizo
+			clerk.unRegisterWsdls();
+			clerk.unRegisterBusiness(serviceKey);
+		} catch (ConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+	@Override
+	public void startUp(ConfigurationContext arg0, AxisService arg1) {
+		
+		try {
+			UDDIClient uddiClient = new UDDIClient("META-INF/uddi.xml");
+			Transport transport = uddiClient.getTransport("default");
+			UDDISecurityPortType security = transport.getUDDISecurityService();
+			UDDIPublicationPortType publish = transport.getUDDIPublishService();
+
+			GetAuthToken getAuthTokenMyPub = new GetAuthToken();
+			getAuthTokenMyPub.setUserID("AntonSergioTomas");
+			getAuthTokenMyPub.setCred("AST");
+			AuthToken myPubAuthToken = security.getAuthToken(getAuthTokenMyPub);
+
+			BusinessEntity myBusEntity = new BusinessEntity();
+			Name myBusName = new Name();
+			myBusName.setValue("Orquestrador");
+			myBusEntity.getName().add(myBusName);
+
+			SaveBusiness sb = new SaveBusiness();
+			sb.getBusinessEntity().add(myBusEntity);
+			sb.setAuthInfo(myPubAuthToken.getAuthInfo());
+			BusinessDetail bd = publish.saveBusiness(sb);
+			String BusKey = bd.getBusinessEntity().get(0).getBusinessKey();
+
+			BusinessService myService = new BusinessService();
+			myService.setBusinessKey(BusKey);
+			Name myServName = new Name();
+			myServName.setValue("Orquestrador");
+			myService.getName().add(myServName);
+
+			BindingTemplate myBindingTemplate = new BindingTemplate();
+			AccessPoint accessPoint = new AccessPoint();
+			accessPoint.setUseType(AccessPointType.WSDL_DEPLOYMENT.toString());
+			accessPoint.setValue("http://localhost:8080/axis2/services/Orquestador");
+			myBindingTemplate.setAccessPoint(accessPoint);
+			BindingTemplates myBindingTemplates = new BindingTemplates();
+			myBindingTemplates.getBindingTemplate().add(myBindingTemplate);
+			myService.setBindingTemplates(myBindingTemplates);
+
+			SaveService ss = new SaveService();
+			ss.getBusinessService().add(myService);
+			ss.setAuthInfo(myPubAuthToken.getAuthInfo());
+			ServiceDetail sd = publish.saveService(ss);
+			this.serviceKey = sd.getBusinessService().get(0).getServiceKey();
+			
+		} catch (ConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (DispositionReportFaultMessage e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
+
+	}
+
 }
 
 class ChamadaAsincrona implements AxisCallback
