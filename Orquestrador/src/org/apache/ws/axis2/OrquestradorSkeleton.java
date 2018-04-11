@@ -19,6 +19,7 @@ import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.OMFactory;
 import org.apache.axiom.om.OMNamespace;
+import org.apache.axis2.AxisFault;
 import org.apache.axis2.addressing.EndpointReference;
 import org.apache.axis2.client.Options;
 import org.apache.axis2.client.ServiceClient;
@@ -64,8 +65,8 @@ import org.uddi.v3_service.UDDISecurityPortType;
 public class OrquestradorSkeleton implements ServiceLifeCycle{
     
     public static OMElement respostaAsincrona = null;
-	private static String serviceKey;
-	private Buscar buscar = null;
+    private static String serviceKey;
+    private Buscar buscar = null;
     /**
      * Auto generated method signature
      *
@@ -73,12 +74,13 @@ public class OrquestradorSkeleton implements ServiceLifeCycle{
      * @return distanciaAMonequilandResponse
      * @throws TransportException 
      * @throws ConfigurationException 
+     * @throws RemoteException 
      */
     public org.apache.ws.axis2.DistanciaAMonequilandResponse distanciaAMonequiland(
-        org.apache.ws.axis2.DistanciaAMonequiland distanciaAMonequiland) throws ConfigurationException, TransportException {
-    	
-    	buscar = new Buscar();
-    	
+        org.apache.ws.axis2.DistanciaAMonequiland distanciaAMonequiland) throws ConfigurationException, TransportException, RemoteException {
+        
+        buscar = new Buscar();
+        
         /**********ARGUMENTOS QUE NOS PASA O USUARIO***********/
         String corpoCeleste = distanciaAMonequiland.getArgs0();
         String unidades = distanciaAMonequiland.getArgs1();
@@ -116,12 +118,13 @@ public class OrquestradorSkeleton implements ServiceLifeCycle{
      * @return viaxeAMonequilandResponse
      * @throws TransportException 
      * @throws ConfigurationException 
+     * @throws RemoteException 
      */
     public org.apache.ws.axis2.ViaxeAMonequilandResponse viaxeAMonequiland(
-        org.apache.ws.axis2.ViaxeAMonequiland viaxeAMonequiland) throws ConfigurationException, TransportException {
-    	
-    	buscar = new Buscar();
-    	
+        org.apache.ws.axis2.ViaxeAMonequiland viaxeAMonequiland) throws ConfigurationException, TransportException, RemoteException {
+        
+        buscar = new Buscar();
+        
         /**********ARGUMENTOS QUE NOS PASA O USUARIO***********/
         String corpoCeleste = viaxeAMonequiland.getArgs0();
         String vehiculo = viaxeAMonequiland.getArgs1();
@@ -153,7 +156,7 @@ public class OrquestradorSkeleton implements ServiceLifeCycle{
        
     }
     
-    public static String TesAmiñaConsulta(String corpoCeleste, String unidades)
+    public String TesAmiñaConsulta(String corpoCeleste, String unidades)
     {
         /*
          * Establecer conexion coa cache*/
@@ -180,7 +183,7 @@ public class OrquestradorSkeleton implements ServiceLifeCycle{
             /***********ESTABLECEMOS AS OPCIONS DA NOSA CONEXION*************************/
             Options opcions = new Options();
             opcions.setProperty(HTTPConstants.CACHED_HTTP_CLIENT, client);
-            opcions.setTo(new EndpointReference("http://localhost:8080/axis2/services/Cache"));
+            opcions.setTo(new EndpointReference(buscar.obterDireccionWSDL("Cache")));
             serviceClient.setOptions(opcions);
             /*****************************************************************************/
         
@@ -278,7 +281,7 @@ public class OrquestradorSkeleton implements ServiceLifeCycle{
             /***********ESTABLECEMOS AS OPCIONS DA NOSA CONEXION*************************/
             Options opcions = new Options();
             opcions.setProperty(HTTPConstants.CACHED_HTTP_CLIENT, client);
-            opcions.setTo(new EndpointReference("http://localhost:8080/axis2/services/Tempo"));
+            opcions.setTo(new EndpointReference(buscar.obterDireccionWSDL("TempoViaxe")));
             serviceClient.setOptions(opcions);
             /*****************************************************************************/
         
@@ -351,92 +354,129 @@ public class OrquestradorSkeleton implements ServiceLifeCycle{
         }
     }
     
-    public void GardameIsto(String corpoCeleste, String unidades, String DistanciaAtaOcorpoCeleste)
+    public void GardameIsto(String corpoCeleste, String segundoParametro, String respostaAgardar) throws RemoteException, ConfigurationException, TransportException
     {
         /*
          * Establecer conexion coa cache*/      
+         /**********ELEMENTO NESCESARIOS PARA ESTBLCER A CONEXION***********/
+        OMElement elementoAgardar = null;
+        OMElement contido1 = null;
+        OMElement contido2 = null;
+        OMElement contido3 = null;
+        OMFactory factory = OMAbstractFactory.getOMFactory();
+        OMNamespace nameSpace = factory.createOMNamespace("http://ws.apache.org/axis2", "ns");//Non estou seguro de que sexa asi
+        ServiceClient serviceClient = new ServiceClient();
+        ChamadaAsincrona chamada = new ChamadaAsincrona();
+        
+        /********************CREAMOS FIOS PARA CADA PETICION***************************/
+        MultiThreadedHttpConnectionManager conmgr = new MultiThreadedHttpConnectionManager();
+        conmgr.getParams().setDefaultMaxConnectionsPerHost(10);
+        HttpClient client = new HttpClient(conmgr);
+        /******************************************************************************/
+        
+        /***********ESTABLECEMOS AS OPCIONS DA NOSA CONEXION*************************/
+        Options opcions = new Options();
+        opcions.setProperty(HTTPConstants.CACHED_HTTP_CLIENT, client);
+        opcions.setTo(new EndpointReference(buscar.obterDireccionWSDL("Cache")));
+        serviceClient.setOptions(opcions);
+        /*****************************************************************************/
+    
+        /***********USAMOS A FUNCION GARDAR NA CACHE DO SERVIZO CACHE******************/
+        elementoAgardar = factory.createOMElement("gardar", nameSpace);
+        contido1 = factory.createOMElement("args0", nameSpace);
+        contido1.setText(corpoCeleste);
+        elementoAgardar.addChild(contido1);
+        contido2 = factory.createOMElement("args1", nameSpace);
+        contido2.setText(segundoParametro);
+        elementoAgardar.addChild(contido2);
+        contido3 = factory.createOMElement("args3", nameSpace);
+        contido3.setText(respostaAgardar);
+        elementoAgardar.addChild(contido3);
+        /******************************************************************************/
+    
+        serviceClient.sendReceiveNonBlocking(elementoAgardar, chamada);
     }
 
     /*Neste metodo desrexitramos o servizo de UDDI*/
-	@Override
-	public void shutDown(ConfigurationContext arg0, AxisService arg1) {
-		try {
-			//Creamos o noso cliente JUDDI a traves da informacion gardada no arquivo uddi.xml
-			//O cal garda a auntenticacions (usuario e contrasinal) do servizo
-			UDDIClient uddiClient = new UDDIClient("META-INF/uddi.xml");	
-			UDDIClerk clerk = uddiClient.getClerk("joe");
-			
-			//Desrexistramos o servizo
-			clerk.unRegisterWsdls();
-			clerk.unRegisterBusiness(serviceKey);
-		} catch (ConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-	}
+    @Override
+    public void shutDown(ConfigurationContext arg0, AxisService arg1) {
+        try {
+            //Creamos o noso cliente JUDDI a traves da informacion gardada no arquivo uddi.xml
+            //O cal garda a auntenticacions (usuario e contrasinal) do servizo
+            UDDIClient uddiClient = new UDDIClient("META-INF/uddi.xml");    
+            UDDIClerk clerk = uddiClient.getClerk("joe");
+            
+            //Desrexistramos o servizo
+            clerk.unRegisterWsdls();
+            clerk.unRegisterBusiness(serviceKey);
+        } catch (ConfigurationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+    }
 
-	@Override
-	public void startUp(ConfigurationContext arg0, AxisService arg1) {
-		
-		try {
-			UDDIClient uddiClient = new UDDIClient("META-INF/uddi.xml");
-			Transport transport = uddiClient.getTransport("default");
-			UDDISecurityPortType security = transport.getUDDISecurityService();
-			UDDIPublicationPortType publish = transport.getUDDIPublishService();
+    @Override
+    public void startUp(ConfigurationContext arg0, AxisService arg1) {
+        
+        try {
+            UDDIClient uddiClient = new UDDIClient("META-INF/uddi.xml");
+            Transport transport = uddiClient.getTransport("default");
+            UDDISecurityPortType security = transport.getUDDISecurityService();
+            UDDIPublicationPortType publish = transport.getUDDIPublishService();
 
-			GetAuthToken getAuthTokenMyPub = new GetAuthToken();
-			getAuthTokenMyPub.setUserID("AntonSergioTomas");
-			getAuthTokenMyPub.setCred("AST");
-			AuthToken myPubAuthToken = security.getAuthToken(getAuthTokenMyPub);
+            GetAuthToken getAuthTokenMyPub = new GetAuthToken();
+            getAuthTokenMyPub.setUserID("AntonSergioTomas");
+            getAuthTokenMyPub.setCred("AST");
+            AuthToken myPubAuthToken = security.getAuthToken(getAuthTokenMyPub);
 
-			BusinessEntity myBusEntity = new BusinessEntity();
-			Name myBusName = new Name();
-			myBusName.setValue("Orquestrador");
-			myBusEntity.getName().add(myBusName);
+            BusinessEntity myBusEntity = new BusinessEntity();
+            Name myBusName = new Name();
+            myBusName.setValue("Orquestrador");
+            myBusEntity.getName().add(myBusName);
 
-			SaveBusiness sb = new SaveBusiness();
-			sb.getBusinessEntity().add(myBusEntity);
-			sb.setAuthInfo(myPubAuthToken.getAuthInfo());
-			BusinessDetail bd = publish.saveBusiness(sb);
-			String BusKey = bd.getBusinessEntity().get(0).getBusinessKey();
+            SaveBusiness sb = new SaveBusiness();
+            sb.getBusinessEntity().add(myBusEntity);
+            sb.setAuthInfo(myPubAuthToken.getAuthInfo());
+            BusinessDetail bd = publish.saveBusiness(sb);
+            String BusKey = bd.getBusinessEntity().get(0).getBusinessKey();
 
-			BusinessService myService = new BusinessService();
-			myService.setBusinessKey(BusKey);
-			Name myServName = new Name();
-			myServName.setValue("Orquestrador");
-			myService.getName().add(myServName);
+            BusinessService myService = new BusinessService();
+            myService.setBusinessKey(BusKey);
+            Name myServName = new Name();
+            myServName.setValue("Orquestrador");
+            myService.getName().add(myServName);
 
-			BindingTemplate myBindingTemplate = new BindingTemplate();
-			AccessPoint accessPoint = new AccessPoint();
-			accessPoint.setUseType(AccessPointType.WSDL_DEPLOYMENT.toString());
-			accessPoint.setValue("http://localhost:8080/axis2/services/Orquestador");
-			myBindingTemplate.setAccessPoint(accessPoint);
-			BindingTemplates myBindingTemplates = new BindingTemplates();
-			myBindingTemplates.getBindingTemplate().add(myBindingTemplate);
-			myService.setBindingTemplates(myBindingTemplates);
+            BindingTemplate myBindingTemplate = new BindingTemplate();
+            AccessPoint accessPoint = new AccessPoint();
+            accessPoint.setUseType(AccessPointType.WSDL_DEPLOYMENT.toString());
+            accessPoint.setValue("http://localhost:8080/axis2/services/Orquestrador");
+            myBindingTemplate.setAccessPoint(accessPoint);
+            BindingTemplates myBindingTemplates = new BindingTemplates();
+            myBindingTemplates.getBindingTemplate().add(myBindingTemplate);
+            myService.setBindingTemplates(myBindingTemplates);
 
-			SaveService ss = new SaveService();
-			ss.getBusinessService().add(myService);
-			ss.setAuthInfo(myPubAuthToken.getAuthInfo());
-			ServiceDetail sd = publish.saveService(ss);
-			this.serviceKey = sd.getBusinessService().get(0).getServiceKey();
-			
-		} catch (ConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TransportException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (DispositionReportFaultMessage e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}	
+            SaveService ss = new SaveService();
+            ss.getBusinessService().add(myService);
+            ss.setAuthInfo(myPubAuthToken.getAuthInfo());
+            ServiceDetail sd = publish.saveService(ss);
+            this.serviceKey = sd.getBusinessService().get(0).getServiceKey();
+            
+        } catch (ConfigurationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (TransportException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (DispositionReportFaultMessage e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }   
 
-	}
+    }
 
 }
 
@@ -445,26 +485,26 @@ class ChamadaAsincrona implements AxisCallback
 
     @Override
     public void onComplete() {
-        // TODO Auto-generated method stub
+        System.out.println("Fin chamada asíncrona\n");
         
     }
 
     @Override
     public void onError(Exception arg0) {
-        // TODO Auto-generated method stub
+        System.out.println("Erro na chamada asíncrona \n");
         
     }
 
     @Override
     public void onFault(MessageContext arg0) {
-        // TODO Auto-generated method stub
+        System.out.println("Fallou a chamada asíncrona\n");
         
     }
 
     @Override
     public void onMessage(MessageContext arg0) {
         Iterator respuestas = arg0.getEnvelope().getBody()
-                .getFirstChildWithName(new javax.xml.namespace.QName("http://registrador", "registrarResponse", "ns1"))
+                .getFirstChildWithName(new javax.xml.namespace.QName("http://cache", "cacheResponse", "ns"))
                 .getChildElements();
         while (respuestas.hasNext()) {
         //  OrquestradorSkeleton.respostaAsincrona = ((OMElement) respuestas.next()).getText();
