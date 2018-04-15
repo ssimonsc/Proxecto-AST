@@ -1,0 +1,17 @@
+<module name="logging" class="LoggingModule">
+   <InFlow>
+        <handler name="InFlowLogHandler" class="LogHandler">
+        <order phase="inicioDeSesion" />
+        </handler>
+   </InFlow>
+</module>
+
+
+
+
+
+
+
+
+
+
