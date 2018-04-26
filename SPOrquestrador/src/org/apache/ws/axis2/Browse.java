@@ -44,7 +44,7 @@ public class Browse {
 		try {
 			// create a manager and read the config in the archive; 
 			// you can use your config file name
-			UDDIClient client = new UDDIClient("META-INF/uddi.xml"); 
+			UDDIClient client = new UDDIClient("/home/ssmonsc/suniversidade/ast/uddi.xml"); 
 			// a UDDIClient can be a client to multiple UDDI nodes, so 
 			// supply the nodeName (defined in your uddi.xml.
 			// The transport can be WS, inVM, RMI etc which is defined in the uddi.xml
