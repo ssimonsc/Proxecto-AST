@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This file was auto-generated from WSDL -->
+<!-- by the Apache Axis2 version: 1.7.7  Built on : Nov 20, 2017 (11:41:20 GMT) -->
+<serviceGroup>
+    <service name="DistanciaCorpoCeleste" class="org.apache.ws.axis2.DistanciaCorpoCelesteSkeleton">
+        <messageReceivers>
+            <messageReceiver mep="http://www.w3.org/ns/wsdl/in-out" class="org.apache.ws.axis2.DistanciaCorpoCelesteMessageReceiverInOut"/>
+        </messageReceivers>
+        <parameter name="ServiceClass">org.apache.ws.axis2.DistanciaCorpoCelesteSkeleton</parameter>
+        <parameter name="useOriginalwsdl">true</parameter>
+        <parameter name="modifyUserWSDLPortAddress">true</parameter>
+        <operation name="getDistancia" mep="http://www.w3.org/ns/wsdl/in-out" namespace="http://ws.apache.org/axis2">
+            <actionMapping>urn:getDistancia</actionMapping>
+            <outputActionMapping>urn:getDistanciaResponse</outputActionMapping>
+        </operation>
+    </service>
+</serviceGroup>
